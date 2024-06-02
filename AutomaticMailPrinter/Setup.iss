@@ -61,7 +61,7 @@ Source: "bin\Release\System.Threading.Tasks.Extensions.xml"; DestDir: "{app}"; F
 Source: "bin\Release\System.ValueTuple.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "bin\Release\de\*"; DestDir: "{app}\de"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "bin\Release\Sounds\*"; DestDir: "{app}\Sounds"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "bin\Release\PrintHtml\*"; DestDir: "{app}\PrintHtml"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "bin\Release\PrintHtml\libwkhtmltox.dll"; DestDir: "{app}\libwkhtmltox.dll"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
