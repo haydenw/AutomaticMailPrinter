@@ -14,6 +14,8 @@ using Orientation = DinkToPdf.Orientation;
 using PdfiumViewer;
 using System.Drawing.Printing;
 using PaperKind = DinkToPdf.PaperKind;
+using System.Drawing;
+using System.Text.RegularExpressions;
 
 namespace AutomaticMailPrinter
 {
@@ -31,6 +33,8 @@ namespace AutomaticMailPrinter
         private static IMailFolder inbox;
 
         private static object sync = new object();
+
+        private static Database database = new Database();
 
         static void Main(string[] args)
         {
@@ -87,16 +91,46 @@ namespace AutomaticMailPrinter
             finally
             {
                 timer = new System.Threading.Timer(Timer_Tick, null, 0, intervalInSecods * 1000);
-            }    
+            }
 
-            while (true)
+
+
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            using (Form form = new Form())
             {
-                Thread.Sleep(500);
+                NotifyIcon notifyIcon = new NotifyIcon
+                {
+                    Text = "Order Printer",
+                    Icon = Properties.Resources.icon,
+                    Visible = true
+                };
+                ContextMenuStrip contextMenu = new ContextMenuStrip();
+                ToolStripMenuItem showOrdersItem = new ToolStripMenuItem("Show Orders");
+                showOrdersItem.Click += ShowOrders_Click;
+                ToolStripMenuItem exitItem = new ToolStripMenuItem("Exit");
+                exitItem.Click += Exit_Click;
+                contextMenu.Items.Add(showOrdersItem);
+                contextMenu.Items.Add(exitItem);
+                notifyIcon.ContextMenuStrip = contextMenu;
+                notifyIcon.Visible = true;
+                Application.Run();
+                notifyIcon.Visible = false;
             }
 
             AppMutex.ReleaseMutex();
         }
 
+        private static void ShowOrders_Click(object sender, EventArgs e)
+        {
+            Form formOrders = new FormOrders();
+            formOrders.ShowDialog();
+        }
+        private static void Exit_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             if (e.ExceptionObject is Exception ex)
@@ -147,6 +181,19 @@ namespace AutomaticMailPrinter
                         string subject = message.Subject.ToLower();
                         if (Filter.Any(f => subject.Contains(f)))
                         {
+                            // Extract order number
+                            string pattern = @"order #(\d+)";
+                            Match match = Regex.Match(subject, pattern);
+                            if (!match.Success)
+                            {
+                                Logger.LogError(string.Format("Failed to extract order number from subject: {0}", subject));
+                                continue;
+                            }
+
+                            int orderNumber = int.Parse(match.Groups[1].Value);
+
+                            database.AddOrder(orderNumber, message.HtmlBody, message.Subject);
+
                             // Print text
                             Console.ForegroundColor = ConsoleColor.Green;
                             Logger.LogInfo($"{string.Format(Properties.Resources.strFoundUnreadMail, Filter.Where(f => subject.Contains(f)).FirstOrDefault())} {message.Subject}");
@@ -154,6 +201,8 @@ namespace AutomaticMailPrinter
                             // Print mail
                             Logger.LogInfo(string.Format(Properties.Resources.strPrintMessage, message.Subject, PrinterName));
                             PrintHtmlPage(message.HtmlBody);
+
+                            database.OrderPrinted(orderNumber);
 
                             // `Read mail https://stackoverflow.com/a/24204804/6237448
                             Logger.LogInfo(Properties.Resources.strMarkMailAsDeleted);                     
