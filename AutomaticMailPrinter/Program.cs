@@ -35,12 +35,12 @@ namespace AutomaticMailPrinter
                 return;
             }
 
-            System.AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             int intervalInSecods = 60;
             try
             {
-                string configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
-                var configDocument = System.Text.Json.JsonSerializer.Deserialize<JsonDocument>(System.IO.File.ReadAllText(configPath));
+                string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
+                var configDocument = JsonSerializer.Deserialize<JsonDocument>(File.ReadAllText(configPath));
 
                 ImapServer = configDocument.RootElement.GetProperty("imap_server").GetString();
                 ImapPort = configDocument.RootElement.GetProperty("imap_port").GetInt32();
@@ -71,35 +71,9 @@ namespace AutomaticMailPrinter
             try
             {
                 Logger.LogInfo(string.Format(Properties.Resources.strConnectToMailServer, $"\"{ImapServer}:{ImapPort}\""));
-
                 client = new ImapClient();
                 client.Connect(ImapServer, ImapPort, true);
                 client.Authenticate(MailAddress, Password);
-
-                // The Inbox folder is always available on all IMAP servers...
-                inbox = client.Inbox;
-                inbox.Open(FolderAccess.ReadWrite);
-
-                // Clear all old mails
-                Logger.LogInfo(Properties.Resources.strDeleteOldMessagesFromInBox, sendWebHook: true);
-                int count = 0;
-                foreach (var uid in inbox.Search(SearchQuery.Seen))
-                {
-                    var message = inbox.GetMessage(uid);
-                    string subject = message.Subject.ToLower();
-
-                    if (Filter.Any(f => subject.Contains(f)))
-                    {
-                        // Delete mail https://stackoverflow.com/a/24204804/6237448
-                        inbox.SetFlags(uid, MessageFlags.Deleted, true);
-                        count++;
-                    }
-                }
-                if (count > 0)
-                    inbox.Expunge();
-
-                Logger.LogInfo(string.Format(Properties.Resources.strDeleteNMessagesFromInBox, count), sendWebHook: true);
-
             }
             catch (Exception ex)
             {
@@ -112,7 +86,7 @@ namespace AutomaticMailPrinter
 
             while (true)
             {
-                System.Threading.Thread.Sleep(500);
+                Thread.Sleep(500);
             }
 
             AppMutex.ReleaseMutex();
@@ -137,7 +111,7 @@ namespace AutomaticMailPrinter
                     Logger.LogInfo(Properties.Resources.strLookingForUnreadMails);
                     bool found = false;
 
-                    if (!client.IsAuthenticated || !client.IsConnected)
+                    if (!client.IsAuthenticated || !client.IsConnected || inbox == null)
                     {
                         Logger.LogWarning(Properties.Resources.strMailClientIsNotConnectedAnymore);
 
@@ -176,9 +150,10 @@ namespace AutomaticMailPrinter
                             Logger.LogInfo(string.Format(Properties.Resources.strPrintMessage, message.Subject, PrinterName));
                             PrintHtmlPage(message.HtmlBody);
 
-                            // Delete mail https://stackoverflow.com/a/24204804/6237448
+                            // `Read mail https://stackoverflow.com/a/24204804/6237448
                             Logger.LogInfo(Properties.Resources.strMarkMailAsDeleted);                     
-                            inbox.SetFlags(uid, MessageFlags.Deleted, true);
+                            //inbox.SetFlags(uid, MessageFlags.Deleted, true);
+                            inbox.SetFlags(uid, MessageFlags.Seen, true);
 
                             found = true;
 
@@ -190,7 +165,7 @@ namespace AutomaticMailPrinter
                         Logger.LogInfo(Properties.Resources.strNoUnreadMailFound);
                     else
                     {
-                        Logger.LogInfo(Properties.Resources.strExpungeMails);
+                        Logger.LogInfo(Properties.Resources.strMarkMailAsRead);
                         inbox.Expunge();
                     }
 
@@ -208,7 +183,7 @@ namespace AutomaticMailPrinter
         {
             try
             {
-                System.Media.SoundPlayer player = new System.Media.SoundPlayer(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sounds", "sound.wav"));
+                System.Media.SoundPlayer player = new System.Media.SoundPlayer(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sounds", "sound.wav"));
                 player.Play();
             }
             catch (Exception ex)
@@ -221,8 +196,8 @@ namespace AutomaticMailPrinter
         {
             try
             {
-                string path = System.IO.Path.GetTempFileName();
-                System.IO.File.WriteAllText(path, htmlContent);
+                string path = Path.GetTempFileName();
+                File.WriteAllText(path, htmlContent);
                 PrintHtmlPages(PrinterName, path);
             }
             catch (Exception ex)
@@ -233,24 +208,12 @@ namespace AutomaticMailPrinter
 
         public static bool? PrintHtmlPages(string printer, params string[] urls)
         {
-            // Spawn the code to print the packing slips
             var info = new ProcessStartInfo();
             info.Arguments = $"-p \"{printer}\" -a A4 \"{string.Join("\" \"", urls)}\"";
             var pathToExe = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             info.FileName = Path.Combine(pathToExe, "PrintHtml", "PrintHtml.exe");
             Process.Start(info);
-
-
             return null;
-            /*using (var p = Process.Start(info))
-            {
-                // Wait until it is finished
-                while (!p.HasExited)
-                    System.Threading.Thread.Sleep(10);
-
-                // Return the exit code
-                return p.ExitCode == 0;
-            }*/
         }
     }
 }
