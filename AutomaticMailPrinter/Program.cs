@@ -202,6 +202,8 @@ namespace AutomaticMailPrinter
             try
             {
                 string pdfPath = ConvertHtmlToPdf(htmlContent);
+                // TODO improve unicode support
+                htmlContent.Replace("×", "x");
                 PrintPdf(pdfPath, PrinterName);
             }
             catch (Exception ex)
@@ -246,8 +248,9 @@ namespace AutomaticMailPrinter
                     {
                         PrinterName = printerName,
                         PrintFileName = pdfPath,
-                        PrintToFile = false
                     };
+
+                    printDocument.DefaultPageSettings.PaperSize = new PaperSize("A4", 595, 842);
 
                     printDocument.Print();
                 }
