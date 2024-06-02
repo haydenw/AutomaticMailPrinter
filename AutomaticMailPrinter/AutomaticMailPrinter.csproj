@@ -94,7 +94,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="icon.ico" />
-    <Content Include="Setup.iss" />
     <None Include="Sounds\sound.wav">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
