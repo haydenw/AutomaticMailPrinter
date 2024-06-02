@@ -9,6 +9,11 @@ using System.Text.Json;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
+using DinkToPdf;
+using Orientation = DinkToPdf.Orientation;
+using PdfiumViewer;
+using System.Drawing.Printing;
+using PaperKind = DinkToPdf.PaperKind;
 
 namespace AutomaticMailPrinter
 {
@@ -196,9 +201,8 @@ namespace AutomaticMailPrinter
         {
             try
             {
-                string path = Path.GetTempFileName();
-                File.WriteAllText(path, htmlContent);
-                PrintHtmlPages(PrinterName, path);
+                string pdfPath = ConvertHtmlToPdf(htmlContent);
+                PrintPdf(pdfPath, PrinterName);
             }
             catch (Exception ex)
             {
@@ -206,14 +210,48 @@ namespace AutomaticMailPrinter
             }
         }
 
-        public static bool? PrintHtmlPages(string printer, params string[] urls)
+        private static string ConvertHtmlToPdf(string htmlContent)
         {
-            var info = new ProcessStartInfo();
-            info.Arguments = $"-p \"{printer}\" -a A4 \"{string.Join("\" \"", urls)}\"";
-            var pathToExe = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            info.FileName = Path.Combine(pathToExe, "PrintHtml", "PrintHtml.exe");
-            Process.Start(info);
-            return null;
+            var converter = new SynchronizedConverter(new PdfTools());
+
+            var doc = new HtmlToPdfDocument()
+            {
+                GlobalSettings = {
+                    ColorMode = ColorMode.Color,
+                    Orientation = Orientation.Portrait,
+                    PaperSize = PaperKind.A4,
+                },
+                Objects = {
+                    new ObjectSettings() {
+                        HtmlContent = htmlContent,
+                    },
+                }
+            };
+
+            var pdf = converter.Convert(doc);
+
+            string pdfPath = Path.Combine(Path.GetTempPath(), "output.pdf");
+            File.WriteAllBytes(pdfPath, pdf);
+
+            return pdfPath;
+        }
+
+        private static void PrintPdf(string pdfPath, string printerName)
+        {
+            using (var document = PdfDocument.Load(pdfPath))
+            {
+                using (var printDocument = document.CreatePrintDocument())
+                {
+                    printDocument.PrinterSettings = new PrinterSettings
+                    {
+                        PrinterName = printerName,
+                        PrintFileName = pdfPath,
+                        PrintToFile = false
+                    };
+
+                    printDocument.Print();
+                }
+            }
         }
     }
 }
