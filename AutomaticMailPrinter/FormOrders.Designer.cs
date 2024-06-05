@@ -32,8 +32,8 @@
             this.listViewOrders = new System.Windows.Forms.ListView();
             this.columnHeaderOrderNumber = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeaderCreatedAt = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.buttonPrint = new System.Windows.Forms.Button();
             this.columnHeaderSubject = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.buttonPrint = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // listViewOrders
@@ -65,6 +65,11 @@
             this.columnHeaderCreatedAt.Text = "Created At";
             this.columnHeaderCreatedAt.Width = 161;
             // 
+            // columnHeaderSubject
+            // 
+            this.columnHeaderSubject.Text = "Subject";
+            this.columnHeaderSubject.Width = 800;
+            // 
             // buttonPrint
             // 
             this.buttonPrint.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -75,10 +80,6 @@
             this.buttonPrint.Text = "Print";
             this.buttonPrint.UseVisualStyleBackColor = true;
             this.buttonPrint.Click += new System.EventHandler(this.buttonPrint_Click);
-            // 
-            // columnHeaderSubject
-            // 
-            this.columnHeaderSubject.Text = "Subject";
             // 
             // FormOrders
             // 
