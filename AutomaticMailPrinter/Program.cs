@@ -37,7 +37,7 @@ namespace AutomaticMailPrinter
 
         private static Database database = new Database();
 
-        private static IConverter converter;
+        private static IConverter converter = new SynchronizedConverter(new PdfTools());
 
         static void Main(string[] args)
         {
@@ -283,7 +283,6 @@ namespace AutomaticMailPrinter
 
         private static string ConvertHtmlToPdf(int orderNumber, string htmlContent)
         {
-            converter = new SynchronizedConverter(new PdfTools());
 
             var doc = new HtmlToPdfDocument()
             {
