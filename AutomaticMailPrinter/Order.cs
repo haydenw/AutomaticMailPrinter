@@ -8,7 +8,7 @@ namespace AutomaticMailPrinter
 {
     public class Order
     {
-        public int id;
+        public int id = 0;
         public string subject;
         public DateTime createdAt;
         public DateTime? printedAt;

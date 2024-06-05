@@ -88,12 +88,9 @@ namespace AutomaticMailPrinter
             {
                 Logger.LogError(Properties.Resources.strFailedToRecieveMails, ex);
             }
-            finally
-            {
-                timer = new System.Threading.Timer(Timer_Tick, null, 0, intervalInSecods * 1000);
-            }
-
-
+            
+            timer = new System.Threading.Timer(Timer_Tick, null, 0, intervalInSecods * 1000);
+            GC.KeepAlive(timer);
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -192,7 +189,16 @@ namespace AutomaticMailPrinter
 
                             int orderNumber = int.Parse(match.Groups[1].Value);
 
-                            database.AddOrder(orderNumber, message.HtmlBody, message.Subject);
+                            Logger.LogInfo(string.Format("Found order #{0}", orderNumber));
+
+                            try
+                            {
+                                database.AddOrder(orderNumber, message.HtmlBody, message.Subject);
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.LogError("Failed to add order!", ex);
+                            }
 
                             // Print text
                             Console.ForegroundColor = ConsoleColor.Green;
@@ -202,12 +208,18 @@ namespace AutomaticMailPrinter
                             Logger.LogInfo(string.Format(Properties.Resources.strPrintMessage, message.Subject, PrinterName));
                             PrintHtmlPage(message.HtmlBody);
 
+                            Logger.LogInfo("Printed");
+
                             database.OrderPrinted(orderNumber);
+
+                            Logger.LogInfo("Set order printed");
 
                             // `Read mail https://stackoverflow.com/a/24204804/6237448
                             Logger.LogInfo(Properties.Resources.strMarkMailAsDeleted);                     
                             //inbox.SetFlags(uid, MessageFlags.Deleted, true);
                             inbox.SetFlags(uid, MessageFlags.Seen, true);
+
+                            Logger.LogInfo("Read email");
 
                             found = true;
 
@@ -230,6 +242,7 @@ namespace AutomaticMailPrinter
             catch (Exception ex)
             {
                 Logger.LogError(Properties.Resources.strFailedToRecieveMails, ex);
+                Logger.LogError(ex.StackTrace);
             }
         }        
 
@@ -299,7 +312,8 @@ namespace AutomaticMailPrinter
                         PrintFileName = pdfPath,
                     };
 
-                    printDocument.DefaultPageSettings.PaperSize = new PaperSize("A4", 595, 842);
+                    printDocument.DefaultPageSettings.PaperSize = new PaperSize("A4", 827, 1169);
+                    printDocument.DefaultPageSettings.Color = true;
 
                     printDocument.Print();
                 }

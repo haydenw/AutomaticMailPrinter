@@ -66,7 +66,7 @@ namespace AutomaticMailPrinter
             {
                 connection.Open();
                 string query = @"
-                SELECT html FROM orders
+                SELECT * FROM orders
                 WHERE id = @Id";
                 using (var command = new SQLiteCommand(query, connection))
                 {
@@ -81,7 +81,7 @@ namespace AutomaticMailPrinter
                                 subject = reader["subject"].ToString(),
                                 html = reader["html"].ToString(),
                                 createdAt = (DateTime)reader["created_at"],
-                                printedAt = (DateTime?)reader["printed_at"],
+                                printedAt = reader["printed_at"] != null ? (DateTime)reader["printed_at"] : DateTime.MinValue,
                             };
                         }
                         else
