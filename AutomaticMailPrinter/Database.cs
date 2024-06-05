@@ -77,11 +77,11 @@ namespace AutomaticMailPrinter
                         {
                             return new Order()
                             {
-                                id = int.Parse(reader["id"].ToString()),
-                                subject = reader["subject"].ToString(),
-                                html = reader["html"].ToString(),
-                                createdAt = (DateTime)reader["created_at"],
-                                printedAt = reader["printed_at"] != null ? (DateTime)reader["printed_at"] : DateTime.MinValue,
+                                id = reader.GetInt32(reader.GetOrdinal("id")),
+                                subject = reader.GetString(reader.GetOrdinal("subject")),
+                                html = reader.GetString(reader.GetOrdinal("html")),
+                                createdAt = reader.GetDateTime(reader.GetOrdinal("created_at")),
+                                printedAt = reader.IsDBNull(reader.GetOrdinal("printed_at")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("printed_at")),
                             };
                         }
                         else
