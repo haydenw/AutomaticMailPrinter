@@ -16,6 +16,7 @@ using System.Drawing.Printing;
 using PaperKind = DinkToPdf.PaperKind;
 using System.Drawing;
 using System.Text.RegularExpressions;
+using DinkToPdf.Contracts;
 
 namespace AutomaticMailPrinter
 {
@@ -35,6 +36,8 @@ namespace AutomaticMailPrinter
         private static object sync = new object();
 
         private static Database database = new Database();
+
+        private static IConverter converter;
 
         static void Main(string[] args)
         {
@@ -280,7 +283,7 @@ namespace AutomaticMailPrinter
 
         private static string ConvertHtmlToPdf(int orderNumber, string htmlContent)
         {
-            var converter = new SynchronizedConverter(new PdfTools());
+            converter = new SynchronizedConverter(new PdfTools());
 
             var doc = new HtmlToPdfDocument()
             {
