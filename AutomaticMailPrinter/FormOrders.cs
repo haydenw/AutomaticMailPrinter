@@ -41,7 +41,7 @@ namespace AutomaticMailPrinter
                     buttonPrint.Text = "Printing...";
                     int id = int.Parse((string)listViewOrders.SelectedItems[0].Tag);
                     string html = database.GetOrder(id).html;
-                    Program.PrintHtmlPage(html);
+                    Program.PrintHtmlPage(id, html);
                     database.OrderPrinted(id);
                     buttonPrint.Text = "Print";
                     buttonPrint.Enabled = true;

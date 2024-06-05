@@ -206,7 +206,7 @@ namespace AutomaticMailPrinter
 
                             // Print mail
                             Logger.LogInfo(string.Format(Properties.Resources.strPrintMessage, message.Subject, PrinterName));
-                            PrintHtmlPage(message.HtmlBody);
+                            PrintHtmlPage(orderNumber, message.HtmlBody);
 
                             Logger.LogInfo("Printed");
 
@@ -259,14 +259,18 @@ namespace AutomaticMailPrinter
             }
         }
 
-        public static void PrintHtmlPage(string htmlContent)
+        public static void PrintHtmlPage(int orderNumber, string htmlContent)
         {
             try
             {
-                string pdfPath = ConvertHtmlToPdf(htmlContent);
+                string pdfPath = ConvertHtmlToPdf(orderNumber, htmlContent);
+                Logger.LogInfo("Converted to PDF");
                 // TODO improve unicode support
                 htmlContent.Replace("×", "x");
                 PrintPdf(pdfPath, PrinterName);
+                Logger.LogInfo("Printed pdf");
+                File.Delete(pdfPath);
+                Logger.LogInfo("Deleted pdf");
             }
             catch (Exception ex)
             {
@@ -274,7 +278,7 @@ namespace AutomaticMailPrinter
             }
         }
 
-        private static string ConvertHtmlToPdf(string htmlContent)
+        private static string ConvertHtmlToPdf(int orderNumber, string htmlContent)
         {
             var converter = new SynchronizedConverter(new PdfTools());
 
@@ -294,7 +298,7 @@ namespace AutomaticMailPrinter
 
             var pdf = converter.Convert(doc);
 
-            string pdfPath = Path.Combine(Path.GetTempPath(), "output.pdf");
+            string pdfPath = Path.Combine(Path.GetTempPath(), string.Format("{0}_output.pdf", orderNumber));
             File.WriteAllBytes(pdfPath, pdf);
 
             return pdfPath;
