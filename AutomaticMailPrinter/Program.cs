@@ -209,20 +209,25 @@ namespace AutomaticMailPrinter
 
                             // Print mail
                             Logger.LogInfo(string.Format(Properties.Resources.strPrintMessage, message.Subject, PrinterName));
-                            PrintHtmlPage(orderNumber, message.HtmlBody);
+                            bool printed = PrintHtmlPage(orderNumber, message.HtmlBody);
+                            if (!printed)
+                            {
+                                Logger.LogError($"Failed to print #{orderNumber}");
+                                continue;
+                            }
 
-                            Logger.LogInfo("Printed");
+                            Logger.LogInfo($"Printed #{orderNumber}");
 
                             database.OrderPrinted(orderNumber);
 
-                            Logger.LogInfo("Set order printed");
+                            Logger.LogInfo($"Set order printed #{orderNumber}");
 
                             // `Read mail https://stackoverflow.com/a/24204804/6237448
                             Logger.LogInfo(Properties.Resources.strMarkMailAsDeleted);                     
                             //inbox.SetFlags(uid, MessageFlags.Deleted, true);
                             inbox.SetFlags(uid, MessageFlags.Seen, true);
 
-                            Logger.LogInfo("Read email");
+                            Logger.LogInfo($"Read email #{orderNumber}");
 
                             found = true;
 
