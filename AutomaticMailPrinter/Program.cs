@@ -262,7 +262,7 @@ namespace AutomaticMailPrinter
             }
         }
 
-        public static void PrintHtmlPage(int orderNumber, string htmlContent)
+        public static bool PrintHtmlPage(int orderNumber, string htmlContent)
         {
             try
             {
@@ -272,12 +272,16 @@ namespace AutomaticMailPrinter
                 htmlContent.Replace("×", "x");
                 PrintPdf(pdfPath, PrinterName);
                 Logger.LogInfo("Printed pdf");
+                
                 File.Delete(pdfPath);
                 Logger.LogInfo("Deleted pdf");
+
+                return true;
             }
             catch (Exception ex)
             {
                 Logger.LogError(Properties.Resources.strFailedToPrintMail, ex);
+                return false;
             }
         }
 
@@ -321,8 +325,22 @@ namespace AutomaticMailPrinter
                     printDocument.DefaultPageSettings.PaperSize = new PaperSize("A4", 827, 1169);
                     printDocument.DefaultPageSettings.Color = true;
 
+                    printDocument.EndPrint += PrintDocument_EndPrint;
+
                     printDocument.Print();
                 }
+            }
+        }
+
+        private static void PrintDocument_EndPrint(object sender, PrintEventArgs e)
+        {
+            if (e.Cancel)
+            {
+                Logger.LogError("Print action cancelled!");
+            }
+            else if (e.PrintAction != PrintAction.PrintToPrinter)
+            {
+                Logger.LogError("Print action failure!");
             }
         }
     }
